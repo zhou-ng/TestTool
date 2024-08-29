@@ -368,7 +368,7 @@ class AdbWindow(QMainWindow):
                     ["adb", "-s", self.device_combox.currentText(), "shell", "pm", "clear", self.get_package_name()],
                     capture_output=True, text=True, shell=True)
             if command.returncode == 0:
-                self.display_output(self.get_package_name() + "已清除缓存")
+                self.display_output(self.get_package_name() + "已清除数据")
             else:
                 self.display_output("清除应用缓存失败，请检查输入框中的包名是否正确以及设备上是否存在该应用")
         except subprocess.CalledProcessError as e:
