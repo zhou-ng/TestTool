@@ -4,7 +4,8 @@
 
 TestTool是基于ADB、HDC命令的图形化界面工具，兼容.apk/.apks/.hap格式的安装包, 方便测试人员进行安装、卸载应用,此外还支持权限对比功能,在App版本迭代时,能够检查新包对比旧包是否增加了新的权限声明.
 
-![](../../FFOutput/TT演示 00_00_00-00_00_30.gif)
+![img.gif](rename_img/TestTool.gif)
+
 
 
 #### 安装与配置
@@ -25,6 +26,7 @@ TestTool是基于ADB、HDC命令的图形化界面工具，兼容.apk/.apks/.hap
 在上一个步骤的基础上，继续复制hdc.exe上一级的文件夹路径，并同样填写在Path中。之后逐个点击弹窗中的【确定】关闭弹窗.
 
 ![img.png](rename_img/img_4.png)
+
 
 
 #### 使用说明
