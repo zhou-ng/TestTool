@@ -1,4 +1,3 @@
-import os
 import subprocess
 
 from PyQt6.QtGui import QTextCursor, QColor, QTextCharFormat
