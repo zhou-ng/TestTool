@@ -1,8 +1,7 @@
-import os
 import re
 import subprocess
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QSizePolicy, QLabel, QPushButton, QCheckBox, QHBoxLayout, \
     QComboBox, QLineEdit, QTextEdit, QFileDialog, QSpacerItem
 
@@ -49,13 +48,13 @@ class InstallApp(QThread):
 class OperationsTab(QWidget):
     def __init__(self):
         super().__init__()
-        # 在此添加鸿蒙应用的安装包名
+        # 在此添加预设的鸿蒙应用的安装包名
         self.hdc_package_options = {
             "com.xingin.xhs_hos": "鸿蒙小红书",
             "com.xunlei.thunder": "鸿蒙迅雷",
             "com.ovital.ovitalMapHm": "鸿蒙奥维互动地图"
         }
-        # 在此添加安卓应用的包名
+        # 在此添加预设的安卓应用的包名
         self.adb_package_options = {
             "com.taobao.taobao": "淘宝",
             "com.ss.android.ugc.aweme": "抖音",
@@ -80,13 +79,14 @@ class OperationsTab(QWidget):
         device_layout.addWidget(refresh_btn)
         device_layout.addWidget(self.harmonyOS_btn)
 
-        install_label = QLabel("安装应用:")
+        install_uninstall_clear_gb = QGroupBox("应用安装/卸载/清除数据")
+        install_uninstall_clear_layout = QVBoxLayout()
         self.install_text = QLineEdit()  # 安装应用输入框，接收输入的安装包路径
         self.install_text.setDragEnabled(True)
         self.install_text.setSizePolicy(size_policy)
         self.install_text.setToolTip("输入电脑上完整的安装包路径或者拖拽安装包文件至此窗口，也可点击“浏览”选择安装包文件")
-        self.install_text.dragEnterEvent = self.handle_dragEnterEvent
-        self.install_text.dropEvent = self.handle_dropEvent
+        self.install_text.dragEnterEvent = self.handle_install_text_dragEnterEvent
+        self.install_text.dropEvent = self.handle_install_text_dropEvent
         install_btn = QPushButton("安装")
         install_btn.setToolTip("在指定设备上，安装.apk/.apks/.hap格式的安装包")
         install_btn.clicked.connect(self.click_install_btn)
@@ -94,14 +94,12 @@ class OperationsTab(QWidget):
         view_btn.setToolTip("打开文件夹，选择安装包")
         view_btn.clicked.connect(self.click_browse_btn)
         install_layout = QHBoxLayout()
-        install_layout.addWidget(install_label)
         install_layout.addWidget(self.install_text)
         install_layout.addWidget(install_btn)
         install_layout.addWidget(view_btn)
-        uninstall_label = QLabel("卸载应用:")
         self.app_option_combox = QComboBox()  # app下拉列表
         self.app_option_combox.setSizePolicy(size_policy)
-        self.app_option_combox.setToolTip("输入应用包名或者从下拉列表中选择")
+        self.app_option_combox.setToolTip("输入应用包名或者从预设的下拉列表中选择应用")
         self.app_option_combox.addItems(self.adb_package_options.values())
         self.app_option_combox.setEditable(True)  # 设置为可编辑
         self.app_option_combox.setCurrentText("")  # 设置默认选项
@@ -112,24 +110,23 @@ class OperationsTab(QWidget):
         clear_cache_btn.setToolTip("清除指定应用的应用数据")
         clear_cache_btn.clicked.connect(self.click_clear_btn)
         uninstall_layout = QHBoxLayout()
-        uninstall_layout.addWidget(uninstall_label)
         uninstall_layout.addWidget(self.app_option_combox)
         uninstall_layout.addWidget(uninstall_btn)
         uninstall_layout.addWidget(clear_cache_btn)
-        self.window_top_btn = QPushButton("窗口置顶")
-        self.window_top_btn.setToolTip("让这个窗口显示在其他窗口上方")
-        self.window_top_btn.setCheckable(True)  # 窗口固定可选中
-        self.window_top_btn.clicked.connect(self.click_window_top)
-        window_layout = QHBoxLayout()
-        self.spacer_item = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        window_layout.addItem(self.spacer_item)
-        window_layout.addWidget(self.window_top_btn)
-        self.operation_groupbox = QGroupBox()
+        install_uninstall_clear_layout.addLayout(install_layout)
+        install_uninstall_clear_layout.addLayout(uninstall_layout)
+        install_uninstall_clear_gb.setLayout(install_uninstall_clear_layout)
 
-        # 创建应用权限选项卡中的调试输出
+        # self.window_top_btn = QPushButton("窗口置顶")
+        # self.window_top_btn.setToolTip("让这个窗口显示在其他窗口上方")
+        # self.window_top_btn.setCheckable(True)  # 窗口固定可选中
+        # self.window_top_btn.clicked.connect(self.click_window_top)
+        # window_layout = QHBoxLayout()
+        # self.spacer_item = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        # window_layout.addItem(self.spacer_item)
+        # window_layout.addWidget(self.window_top_btn)
         self.console = QTextEdit()
         self.console.setReadOnly(True)  # 只读，不能编辑
-
         console_groupbox = QGroupBox("调试输出")
         console_layout = QVBoxLayout()
         console_layout.addWidget(self.console)
@@ -140,14 +137,12 @@ class OperationsTab(QWidget):
         console_layout.addWidget(clear_button)
         console_groupbox.setLayout(console_layout)
 
-        self.console_groupbox = console_groupbox
         operations_tab = QVBoxLayout()
         operations_tab.addLayout(device_layout)
-        operations_tab.addLayout(install_layout)
-        operations_tab.addLayout(uninstall_layout)
-        operations_tab.addLayout(window_layout)
+        operations_tab.addWidget(install_uninstall_clear_gb)
+        # operations_tab.addLayout(window_layout)
         operations_tab.addWidget(console_groupbox)
-
+        self.operation_groupbox = QGroupBox()
         self.operation_groupbox.setLayout(operations_tab)
         self.setLayout(operations_tab)
 
@@ -275,12 +270,12 @@ class OperationsTab(QWidget):
             self.display_output(f"清除 {package_name} 缓存时出错：{e.stderr}")
 
     @staticmethod
-    def handle_dragEnterEvent(event):
+    def handle_install_text_dragEnterEvent(event):
         if event.mimeData().hasUrls():
             event.acceptProposedAction()
 
     # 拖动物体释放到QLineEdit区域时被调用
-    def handle_dropEvent(self, event):
+    def handle_install_text_dropEvent(self, event):
         if event.mimeData().hasUrls():
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.install_text.setText(file_path)
@@ -296,12 +291,12 @@ class OperationsTab(QWidget):
         self.app_option_combox.setCurrentText("")
 
     # 窗口置顶
-    def click_window_top(self):
-        if self.window_top_btn.isChecked():
-            self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-        else:
-            self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
-        self.show()
+    # def click_window_top(self):
+    #     if self.window_top_btn.isChecked():
+    #         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+    #     else:
+    #         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+    #     self.show()
 
     # 控制台输出
     def display_output(self, message):

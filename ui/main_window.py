@@ -1,4 +1,3 @@
-import os
 import sys
 
 from PyQt6.QtGui import QIcon
@@ -26,11 +25,7 @@ class MainWindow(QTabWidget):
 
 
 if __name__ == "__main__":
-    try:
-        app = QApplication(sys.argv)
-        window = MainWindow()
-        window.show()
-        sys.exit(app.exec())
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
