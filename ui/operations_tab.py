@@ -1,9 +1,9 @@
 import re
 import subprocess
 
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QSizePolicy, QLabel, QPushButton, QCheckBox, QHBoxLayout, \
-    QComboBox, QLineEdit, QTextEdit, QFileDialog, QSpacerItem
+    QComboBox, QLineEdit, QTextEdit, QFileDialog
 
 from ui import INSTALL_APKS_PATH
 
@@ -68,7 +68,7 @@ class OperationsTab(QWidget):
         self.device_combox.setSizePolicy(size_policy)
         self.device_combox.setToolTip("当前与电脑连接的设备")
         refresh_btn = QPushButton("刷新设备")
-        refresh_btn.setToolTip("查看当前的设备连接情况")
+        refresh_btn.setToolTip("查看当前设备的连接情况")
         refresh_btn.clicked.connect(self.refresh_device_list)
         self.harmonyOS_btn = QCheckBox(" 鸿蒙系统")
         self.harmonyOS_btn.setToolTip("测试鸿蒙应用时,勾选此项")
@@ -117,14 +117,10 @@ class OperationsTab(QWidget):
         install_uninstall_clear_layout.addLayout(uninstall_layout)
         install_uninstall_clear_gb.setLayout(install_uninstall_clear_layout)
 
-        # self.window_top_btn = QPushButton("窗口置顶")
-        # self.window_top_btn.setToolTip("让这个窗口显示在其他窗口上方")
-        # self.window_top_btn.setCheckable(True)  # 窗口固定可选中
-        # self.window_top_btn.clicked.connect(self.click_window_top)
-        # window_layout = QHBoxLayout()
-        # self.spacer_item = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        # window_layout.addItem(self.spacer_item)
-        # window_layout.addWidget(self.window_top_btn)
+        self.window_top_btn = QPushButton("窗口置顶")
+        self.window_top_btn.setToolTip("让这个窗口显示在其他窗口上方")
+        self.window_top_btn.setCheckable(True)  # 窗口固定可选中
+        self.window_top_btn.clicked.connect(self.click_window_top)
         self.console = QTextEdit()
         self.console.setReadOnly(True)  # 只读，不能编辑
         console_groupbox = QGroupBox("调试输出")
@@ -138,9 +134,9 @@ class OperationsTab(QWidget):
         console_groupbox.setLayout(console_layout)
 
         operations_tab = QVBoxLayout()
+        operations_tab.addWidget(self.window_top_btn)
         operations_tab.addLayout(device_layout)
         operations_tab.addWidget(install_uninstall_clear_gb)
-        # operations_tab.addLayout(window_layout)
         operations_tab.addWidget(console_groupbox)
         self.operation_groupbox = QGroupBox()
         self.operation_groupbox.setLayout(operations_tab)
@@ -291,12 +287,12 @@ class OperationsTab(QWidget):
         self.app_option_combox.setCurrentText("")
 
     # 窗口置顶
-    # def click_window_top(self):
-    #     if self.window_top_btn.isChecked():
-    #         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
-    #     else:
-    #         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
-    #     self.show()
+    def click_window_top(self):
+        if self.window_top_btn.isChecked():
+            self.window().setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, True)
+        else:
+            self.window().setWindowFlag(Qt.WindowType.WindowStaysOnTopHint, False)
+        self.window().show()
 
     # 控制台输出
     def display_output(self, message):
