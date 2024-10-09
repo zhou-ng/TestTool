@@ -1,7 +1,9 @@
+import datetime
 import re
 import subprocess
 
-from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtCore import QThread, pyqtSignal, Qt, QRegularExpression
+from PyQt6.QtGui import QRegularExpressionValidator
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QSizePolicy, QLabel, QPushButton, QCheckBox, QHBoxLayout, \
     QComboBox, QLineEdit, QTextEdit, QFileDialog
 
@@ -63,30 +65,54 @@ class OperationsTab(QWidget):
         }
         # 设置QComboBox、QLineEdit的统一大小
         size_policy = QSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
-        device_label = QLabel("设备列表:")
         self.device_combox = QComboBox()  # 设备下拉列表
         self.device_combox.setSizePolicy(size_policy)
-        self.device_combox.setToolTip("当前与电脑连接的设备")
+        self.device_combox.setToolTip("选择要操作的设备")
         refresh_btn = QPushButton("刷新设备")
         refresh_btn.setToolTip("查看当前设备的连接情况")
         refresh_btn.clicked.connect(self.refresh_device_list)
         self.harmonyOS_btn = QCheckBox(" 鸿蒙系统")
         self.harmonyOS_btn.setToolTip("测试鸿蒙应用时,勾选此项")
         self.harmonyOS_btn.toggled.connect(self.click_harmonyOS_update_btn)
-        device_layout = QHBoxLayout()
-        device_layout.addWidget(device_label)
-        device_layout.addWidget(self.device_combox)
-        device_layout.addWidget(refresh_btn)
-        device_layout.addWidget(self.harmonyOS_btn)
+        device_usb_layout = QHBoxLayout()
+        device_usb_layout.addWidget(self.device_combox)
+        device_usb_layout.addWidget(refresh_btn)
+        device_usb_layout.addWidget(self.harmonyOS_btn)
+
+        self.input_ip_address_le = QLineEdit()
+        regex = QRegularExpression(r"[0-9.]+")  # 只允许输入数字和小数点
+        validator = QRegularExpressionValidator(regex, self.input_ip_address_le)
+        self.input_ip_address_le.setValidator(validator)  # 设置验证器
+        self.input_ip_address_le.setPlaceholderText(" 输入手机的IP地址")
+        self.input_ip_address_le.setSizePolicy(size_policy)
+        connect_device_btn = QPushButton("无线连接")
+        connect_device_btn.clicked.connect(self.connect_device_withIP)
+        disconnect_device_btn = QPushButton("断开连接")
+        disconnect_device_btn.clicked.connect(self.disconnect_device_withIP)
+        get_ip_address_btn = QPushButton("?")
+        get_ip_address_btn.setFixedSize(20, 20)
+        get_ip_address_btn.setToolTip("获取当前连接设备的IP地址")
+        get_ip_address_btn.clicked.connect(self.get_device_ip_address)
+        device_ip_layout = QHBoxLayout()
+        device_ip_layout.addWidget(self.input_ip_address_le)
+        device_ip_layout.addWidget(get_ip_address_btn)
+        device_ip_layout.addWidget(connect_device_btn)
+        device_ip_layout.addWidget(disconnect_device_btn)
+
+        device_gb = QGroupBox("设备连接")
+        device_layout = QVBoxLayout()
+        device_layout.addLayout(device_usb_layout)
+        device_layout.addLayout(device_ip_layout)
+        device_gb.setLayout(device_layout)
 
         install_uninstall_clear_gb = QGroupBox("应用安装/卸载/清除数据")
         install_uninstall_clear_layout = QVBoxLayout()
-        self.install_text = QLineEdit()  # 安装应用输入框，接收输入的安装包路径
-        self.install_text.setDragEnabled(True)
-        self.install_text.setSizePolicy(size_policy)
-        self.install_text.setToolTip("输入电脑上完整的安装包路径或者拖拽安装包文件至此窗口，也可点击“浏览”选择安装包文件")
-        self.install_text.dragEnterEvent = self.handle_install_text_dragEnterEvent
-        self.install_text.dropEvent = self.handle_install_text_dropEvent
+        self.input_install_path_le = QLineEdit()  # 安装应用输入框，接收输入的安装包路径
+        self.input_install_path_le.setDragEnabled(True)
+        self.input_install_path_le.setSizePolicy(size_policy)
+        self.input_install_path_le.setToolTip("输入电脑上完整的安装包路径或者拖拽安装包文件至此窗口，也可点击“浏览”选择安装包文件")
+        self.input_install_path_le.dragEnterEvent = self.handle_install_text_dragEnterEvent
+        self.input_install_path_le.dropEvent = self.handle_install_text_dropEvent
         install_btn = QPushButton("安装")
         install_btn.setToolTip("在指定设备上，安装.apk/.apks/.hap格式的安装包")
         install_btn.clicked.connect(self.click_install_btn)
@@ -94,9 +120,10 @@ class OperationsTab(QWidget):
         view_btn.setToolTip("打开文件夹，选择安装包")
         view_btn.clicked.connect(self.click_browse_btn)
         install_layout = QHBoxLayout()
-        install_layout.addWidget(self.install_text)
+        install_layout.addWidget(self.input_install_path_le)
         install_layout.addWidget(install_btn)
         install_layout.addWidget(view_btn)
+
         self.app_option_combox = QComboBox()  # app下拉列表
         self.app_option_combox.setSizePolicy(size_policy)
         self.app_option_combox.setToolTip("输入应用包名或者从预设的下拉列表中选择应用")
@@ -113,6 +140,7 @@ class OperationsTab(QWidget):
         uninstall_layout.addWidget(self.app_option_combox)
         uninstall_layout.addWidget(uninstall_btn)
         uninstall_layout.addWidget(clear_cache_btn)
+
         install_uninstall_clear_layout.addLayout(install_layout)
         install_uninstall_clear_layout.addLayout(uninstall_layout)
         install_uninstall_clear_gb.setLayout(install_uninstall_clear_layout)
@@ -135,11 +163,9 @@ class OperationsTab(QWidget):
 
         operations_tab = QVBoxLayout()
         operations_tab.addWidget(self.window_top_btn)
-        operations_tab.addLayout(device_layout)
+        operations_tab.addWidget(device_gb)
         operations_tab.addWidget(install_uninstall_clear_gb)
         operations_tab.addWidget(console_groupbox)
-        self.operation_groupbox = QGroupBox()
-        self.operation_groupbox.setLayout(operations_tab)
         self.setLayout(operations_tab)
 
     # 刷新设备列表
@@ -184,10 +210,10 @@ class OperationsTab(QWidget):
         file_dialog = QFileDialog()
         file_path, _ = file_dialog.getOpenFileName(self, "选择apk/apks/hap文件", "", "install files (*.apk *.apks *.hap)")
         if file_path:
-            self.install_text.setText(file_path)
+            self.input_install_path_le.setText(file_path)
 
     def click_install_btn(self):
-        apk_path = self.install_text.text()
+        apk_path = self.input_install_path_le.text()
         device = self.device_combox.currentText()
         if not device:
             self.display_output("请选择要安装到的设备")
@@ -242,7 +268,7 @@ class OperationsTab(QWidget):
             else:
                 self.display_output("卸载失败，请检查输入框中的包名是否正确以及设备上是否存在该应用")
         except subprocess.CalledProcessError as e:
-            self.display_output(f"卸载 {package_name} 应用时出错：{e.output.decode('utf-8')}")
+            self.display_output(f"卸载 {package_name} 应用时出错：{e.stderr}")
 
     # 清除应用缓存
     def click_clear_btn(self):
@@ -263,7 +289,7 @@ class OperationsTab(QWidget):
             else:
                 self.display_output("清除应用缓存失败，请检查输入框中的包名是否正确以及设备上是否存在该应用")
         except subprocess.CalledProcessError as e:
-            self.display_output(f"清除 {package_name} 缓存时出错：{e.stderr}")
+            self.display_output(f"{package_name}清除缓存报错：{e.stderr}")
 
     @staticmethod
     def handle_install_text_dragEnterEvent(event):
@@ -274,7 +300,7 @@ class OperationsTab(QWidget):
     def handle_install_text_dropEvent(self, event):
         if event.mimeData().hasUrls():
             file_path = event.mimeData().urls()[0].toLocalFile()
-            self.install_text.setText(file_path)
+            self.input_install_path_le.setText(file_path)
 
     # 当勾选鸿蒙设备时更新卸载应用下拉框的状态
     def click_harmonyOS_update_btn(self, checked):
@@ -296,8 +322,63 @@ class OperationsTab(QWidget):
 
     # 控制台输出
     def display_output(self, message):
-        self.console.append(message)
+        timestamp = datetime.datetime.now().strftime("%m-%d %H:%M:%S")
+        output = f"[{timestamp}] {message}"
+        self.console.append(output)
 
     # 清空控制台输出
     def clear_console_output(self):
         self.console.clear()
+
+    # 获取手机的IP地址
+    def get_device_ip_address(self):
+        device = self.device_combox.currentText()
+        if not device:
+            self.display_output("没有USB连接的设备,请先使用USB连接")
+            return
+        try:
+            command = subprocess.check_output(["adb", "-s", device, "shell", "ip", "addr", "show", "wlan0"])
+            output = command.decode("utf-8")
+            # 使用正则表达式提取IP地址
+            format_output = r"inet\s+(\d+\.\d+\.\d+\.\d+)\/\d+"
+            match = re.search(format_output, output)
+            if match:
+                ip_address = match.group(1)
+                self.input_ip_address_le.setText(ip_address)
+                self.display_output(f"当前设备 IP 地址: {ip_address}")
+            else:
+                self.display_output("无法获取设备IP地址")
+        except subprocess.CalledProcessError as e:
+            self.display_output(f"获取IP地址失败.报错:{e.stderr}")
+
+    # 无线连接
+    def connect_device_withIP(self):
+        ip_address = self.input_ip_address_le.text().strip()
+        if not ip_address:
+            self.display_output("请先输入地址")
+            return
+        try:
+            # 检查当前电脑是否已经监听5555 端口号
+            output = subprocess.run(["netstat", "-an"], capture_output=True, text=True, check=True)
+            is_port_listening = ":5555" in output.stdout
+            # 未监听则先监听5555 端口号
+            if not is_port_listening:
+                subprocess.run(["adb", "tcpip", "5555"], capture_output=True, text=True, check=True)
+            subprocess.run(["adb", "connect", f"{ip_address}:5555"], capture_output=True, text=True, check=True)
+            self.display_output("无线连接成功")
+            self.refresh_device_list()
+        except subprocess.CalledProcessError as e:
+            self.display_output(f"无线连接失败.报错:{e.stderr}")
+
+    # 断开无线连接
+    def disconnect_device_withIP(self):
+        ip_address = self.input_ip_address_le.text().strip()
+        if not ip_address:
+            self.display_output("请先输入要断开连接设备的IP地址")
+            return
+        try:
+            subprocess.run(["adb", "disconnect", ip_address], capture_output=True, text=True, check=True)
+            self.display_output(f"{ip_address}已断开无线连接")
+            self.refresh_device_list()
+        except subprocess.CalledProcessError as e:
+            self.display_output(f"断开连接失败.报错:{e.stderr}")

@@ -7,6 +7,7 @@ from permission_tab import PermissionTab
 from remote_tab import RemoteTab
 from operations_tab import OperationsTab
 from ui import TEST_TOOL_ICO_PATH
+from other_functions_tab import OtherFunctionsTab
 
 
 class MainWindow(QMainWindow):
@@ -19,10 +20,12 @@ class MainWindow(QMainWindow):
         self.operation_tab = OperationsTab()
         self.permission_tab = PermissionTab()
         self.remote_tab = RemoteTab()
+        self.other_functions_tab = OtherFunctionsTab()
 
         self.tabs.addTab(self.operation_tab, "应用操作")
         self.tabs.addTab(self.permission_tab, "应用权限")
         self.tabs.addTab(self.remote_tab, "模拟遥控")
+        self.tabs.addTab(self.other_functions_tab, "其他")
         self.resize(400, 400)  # 初始化窗口大小 （宽，高）
 
 
