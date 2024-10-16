@@ -4,7 +4,7 @@ import subprocess
 
 from PyQt6.QtCore import QThread, pyqtSignal, Qt, QRegularExpression
 from PyQt6.QtGui import QRegularExpressionValidator
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QSizePolicy, QLabel, QPushButton, QCheckBox, QHBoxLayout, \
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QGroupBox, QSizePolicy, QPushButton, QCheckBox, QHBoxLayout, \
     QComboBox, QLineEdit, QTextEdit, QFileDialog
 
 from ui import INSTALL_APKS_PATH
@@ -51,6 +51,7 @@ class OperationsTab(QWidget):
     def __init__(self):
         super().__init__()
         # 在此添加预设的鸿蒙应用的安装包名
+        self.install_thread = None
         self.hdc_package_options = {
             "com.xingin.xhs_hos": "鸿蒙小红书",
             "com.xunlei.thunder": "鸿蒙迅雷",
@@ -70,7 +71,6 @@ class OperationsTab(QWidget):
         self.device_combox.setToolTip("选择要操作的设备")
         refresh_btn = QPushButton("刷新设备")
         refresh_btn.setToolTip("查看当前设备的连接情况")
-        refresh_btn.clicked.connect(self.refresh_device_list)
         self.harmonyOS_btn = QCheckBox(" 鸿蒙系统")
         self.harmonyOS_btn.setToolTip("测试鸿蒙应用时,勾选此项")
         self.harmonyOS_btn.toggled.connect(self.click_harmonyOS_update_btn)
@@ -86,13 +86,10 @@ class OperationsTab(QWidget):
         self.input_ip_address_le.setPlaceholderText(" 输入手机的IP地址")
         self.input_ip_address_le.setSizePolicy(size_policy)
         connect_device_btn = QPushButton("无线连接")
-        connect_device_btn.clicked.connect(self.connect_device_withIP)
         disconnect_device_btn = QPushButton("断开连接")
-        disconnect_device_btn.clicked.connect(self.disconnect_device_withIP)
         get_ip_address_btn = QPushButton("?")
         get_ip_address_btn.setFixedSize(20, 20)
         get_ip_address_btn.setToolTip("获取当前连接设备的IP地址")
-        get_ip_address_btn.clicked.connect(self.get_device_ip_address)
         device_ip_layout = QHBoxLayout()
         device_ip_layout.addWidget(self.input_ip_address_le)
         device_ip_layout.addWidget(get_ip_address_btn)
@@ -115,10 +112,8 @@ class OperationsTab(QWidget):
         self.input_install_path_le.dropEvent = self.handle_install_text_dropEvent
         install_btn = QPushButton("安装")
         install_btn.setToolTip("在指定设备上，安装.apk/.apks/.hap格式的安装包")
-        install_btn.clicked.connect(self.click_install_btn)
         view_btn = QPushButton("浏览")
         view_btn.setToolTip("打开文件夹，选择安装包")
-        view_btn.clicked.connect(self.click_browse_btn)
         install_layout = QHBoxLayout()
         install_layout.addWidget(self.input_install_path_le)
         install_layout.addWidget(install_btn)
@@ -132,10 +127,8 @@ class OperationsTab(QWidget):
         self.app_option_combox.setCurrentText("")  # 设置默认选项
         uninstall_btn = QPushButton("卸载")
         uninstall_btn.setToolTip("卸载指定的应用")
-        uninstall_btn.clicked.connect(self.click_uninstall_btn)
         clear_cache_btn = QPushButton("清除数据")
         clear_cache_btn.setToolTip("清除指定应用的应用数据")
-        clear_cache_btn.clicked.connect(self.click_clear_btn)
         uninstall_layout = QHBoxLayout()
         uninstall_layout.addWidget(self.app_option_combox)
         uninstall_layout.addWidget(uninstall_btn)
@@ -148,7 +141,6 @@ class OperationsTab(QWidget):
         self.window_top_btn = QPushButton("窗口置顶")
         self.window_top_btn.setToolTip("让这个窗口显示在其他窗口上方")
         self.window_top_btn.setCheckable(True)  # 窗口固定可选中
-        self.window_top_btn.clicked.connect(self.click_window_top)
         self.console = QTextEdit()
         self.console.setReadOnly(True)  # 只读，不能编辑
         console_groupbox = QGroupBox("调试输出")
@@ -157,7 +149,6 @@ class OperationsTab(QWidget):
 
         clear_button = QPushButton("清空")
         clear_button.setToolTip("清空[调试输出]中的信息")
-        clear_button.clicked.connect(self.clear_console_output)
         console_layout.addWidget(clear_button)
         console_groupbox.setLayout(console_layout)
 
@@ -167,6 +158,18 @@ class OperationsTab(QWidget):
         operations_tab.addWidget(install_uninstall_clear_gb)
         operations_tab.addWidget(console_groupbox)
         self.setLayout(operations_tab)
+
+        # 按钮点击事件
+        self.window_top_btn.clicked.connect(self.click_window_top)
+        refresh_btn.clicked.connect(self.refresh_device_list)
+        connect_device_btn.clicked.connect(self.connect_device_withIP)
+        install_btn.clicked.connect(self.click_install_btn)
+        uninstall_btn.clicked.connect(self.click_uninstall_btn)
+        view_btn.clicked.connect(self.click_browse_btn)
+        clear_cache_btn.clicked.connect(self.click_clear_btn)
+        disconnect_device_btn.clicked.connect(self.disconnect_device_withIP)
+        get_ip_address_btn.clicked.connect(self.get_device_ip_address)
+        clear_button.clicked.connect(self.clear_console_output)
 
     # 刷新设备列表
     def refresh_device_list(self):
@@ -189,8 +192,8 @@ class OperationsTab(QWidget):
                     devices.append(device)
                 self.display_output(device_output)
             else:
-                adb_output = subprocess.check_output(["adb", "devices"], creationflags=0x08000000).decode("utf-8")
-                filtered_output = re.sub(r"List of devices attached\n", "", adb_output)
+                devices_output = subprocess.check_output(["adb", "devices"], creationflags=0x08000000).decode("utf-8")
+                filtered_output = re.sub(r"List of devices attached\n", "", devices_output)
                 lines = filtered_output.strip().split("\n")
                 device_output = "当前连接的设备及连接状态：\n"
                 for line in lines[1:]:
@@ -207,8 +210,7 @@ class OperationsTab(QWidget):
         return devices
 
     def click_browse_btn(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "选择apk/apks/hap文件", "", "install files (*.apk *.apks *.hap)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "选择apk/apks/hap文件", "", "install files (*.apk *.apks *.hap)")
         if file_path:
             self.input_install_path_le.setText(file_path)
 
@@ -262,7 +264,7 @@ class OperationsTab(QWidget):
                 command = ["hdc", "uninstall", package_name]
             else:
                 command = ["adb", "-s", self.device_combox.currentText(), "uninstall", package_name]
-            result = subprocess.run(command, capture_output=True, text=True, shell=True)
+            result = subprocess.run(command, capture_output=True, text=True)
             if result.returncode == 0:
                 self.display_output(f"{package_name} 应用卸载成功")
             else:

@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.permission_tab, "应用权限")
         self.tabs.addTab(self.remote_tab, "模拟遥控")
         self.tabs.addTab(self.other_functions_tab, "其他")
-        self.resize(400, 400)  # 初始化窗口大小 （宽，高）
+        self.resize(410, 470)
 
 
 if __name__ == "__main__":
