@@ -7,7 +7,7 @@ import time
 from PyQt6.QtCore import QTimer, QSortFilterProxyModel, Qt
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, \
-    QFrame, QStatusBar, QGroupBox, QFileDialog, QLabel, QTableView, QHeaderView, QAbstractItemView, QComboBox
+    QFrame, QStatusBar, QGroupBox, QFileDialog, QLabel, QTableView, QHeaderView, QComboBox
 
 
 class OtherFunctionsTab(QWidget):
@@ -249,8 +249,7 @@ class OtherFunctionsTab(QWidget):
         try:
             with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as log_file:
                 log_lines = log_file.readlines()
-                exceptions = []  # 用于存储异常信息的列表
-
+                exceptions = []  # 用于存储异常信息
                 # 正则表达式匹配异常行
                 exception_pattern = re.compile(r'(?i)(exception|error|fatal|anr in)', re.MULTILINE)
 

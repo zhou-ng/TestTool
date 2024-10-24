@@ -32,11 +32,13 @@ class PermissionTab(QWidget):
         compare_permission_gl = QGridLayout()
         first_package_label = QLabel("第一个应用 :")
         self.input_first_package_le = QLineEdit()  # 第一个安装包输入框
+        self.input_first_package_le.setToolTip("输入apk文件路径或者拖拽文件至此")
         self.input_first_package_le.setAcceptDrops(True)  # 允许拖放
         self.input_first_package_le.dragEnterEvent = self.input_drag_enter
         self.input_first_package_le.dropEvent = self.input_first_drop
         second_package_label = QLabel("第二个应用 :")
         self.input_second_package_le = QLineEdit()  # 第二个安装包输入框
+        self.input_second_package_le.setToolTip("输入apk文件路径或者拖拽文件至此")
         self.input_second_package_le.setAcceptDrops(True)  # 允许拖放
         self.input_second_package_le.dragEnterEvent = self.input_drag_enter
         self.input_second_package_le.dropEvent = self.input_second_drop
@@ -98,7 +100,6 @@ class PermissionTab(QWidget):
         self.first_package_output.clear()
         cursor = self.first_package_output.textCursor()
         cursor.insertText("当前包声明的应用权限 :\n")
-
         package_path = self.input_package_le.text()
         permissions = self.get_apk_permissions(package_path)
         for permission in permissions:

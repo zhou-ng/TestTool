@@ -159,7 +159,7 @@ class OperationsTab(QWidget):
         operations_tab.addWidget(console_groupbox)
         self.setLayout(operations_tab)
 
-        # 按钮点击事件
+        # 按钮事件
         self.window_top_btn.clicked.connect(self.click_window_top)
         refresh_btn.clicked.connect(self.refresh_device_list)
         connect_device_btn.clicked.connect(self.connect_device_withIP)
