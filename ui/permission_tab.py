@@ -10,7 +10,7 @@ from ui import AAPT_PATH
 class PermissionTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.is_show_widget = False
+        self.show_permission_widget = False
         h_spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         v_spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
 
@@ -23,11 +23,8 @@ class PermissionTab(QWidget):
         first_hl = QHBoxLayout()
         first_hl.addWidget(self.input_package_le)
         first_hl.addWidget(view_btn)
-        self.permission_output = QTextEdit()  # 权限输出弹窗
-        self.permission_output.setVisible(False)
         show_permission_vl = QVBoxLayout()
         show_permission_vl.addLayout(first_hl)
-        show_permission_vl.addWidget(self.permission_output)
         self.show_permission_gb = QGroupBox("查看应用权限")
         self.show_permission_gb.setLayout(show_permission_vl)
 
@@ -35,11 +32,13 @@ class PermissionTab(QWidget):
         compare_permission_gl = QGridLayout()
         first_package_label = QLabel("第一个应用 :")
         self.input_first_package_le = QLineEdit()  # 第一个安装包输入框
+        self.input_first_package_le.setToolTip("输入apk文件路径或者拖拽文件至此")
         self.input_first_package_le.setAcceptDrops(True)  # 允许拖放
         self.input_first_package_le.dragEnterEvent = self.input_drag_enter
         self.input_first_package_le.dropEvent = self.input_first_drop
         second_package_label = QLabel("第二个应用 :")
         self.input_second_package_le = QLineEdit()  # 第二个安装包输入框
+        self.input_second_package_le.setToolTip("输入apk文件路径或者拖拽文件至此")
         self.input_second_package_le.setAcceptDrops(True)  # 允许拖放
         self.input_second_package_le.dragEnterEvent = self.input_drag_enter
         self.input_second_package_le.dropEvent = self.input_second_drop
@@ -64,7 +63,6 @@ class PermissionTab(QWidget):
         compare_permission_gl.addWidget(second_package_label, 1, 0)
         compare_permission_gl.addWidget(self.input_second_package_le, 1, 1)
         compare_permission_gl.addLayout(qh, 2, 0, 1, 2)
-        compare_permission_gl.addLayout(output_qh, 3, 0, 1, 2, )
         self.compare_permission_gb.setLayout(compare_permission_gl)
 
         self.pack_up_btn = QPushButton("收起")
@@ -73,6 +71,7 @@ class PermissionTab(QWidget):
         app_permission_vl = QVBoxLayout()
         app_permission_vl.addWidget(self.show_permission_gb)  # 查看权限
         app_permission_vl.addWidget(self.compare_permission_gb)
+        app_permission_vl.addLayout(output_qh, stretch=1)
         app_permission_vl.addItem(v_spacer)
         app_permission_vl.addWidget(self.pack_up_btn)
         self.setLayout(app_permission_vl)
@@ -92,25 +91,20 @@ class PermissionTab(QWidget):
             file_path = event.mimeData().urls()[0].toLocalFile()
             self.input_package_le.setText(file_path)
 
-    # 点击查看权限中的确定
+    # 点击查看
     def click_view_btn(self):
         self.compare_permission_gb.setVisible(False)
-        self.first_package_output.setVisible(False)
-        self.second_package_output.setVisible(False)
         self.pack_up_btn.setVisible(True)
-        self.is_show_widget = False
-        self.permission_output.setVisible(True)
-        self.permission_output.clear()
-        cursor = self.permission_output.textCursor()
+        self.show_permission_widget = False
+        self.first_package_output.setVisible(True)
+        self.first_package_output.clear()
+        cursor = self.first_package_output.textCursor()
         cursor.insertText("当前包声明的应用权限 :\n")
-
         package_path = self.input_package_le.text()
         permissions = self.get_apk_permissions(package_path)
-
         for permission in permissions:
             cursor.insertText(permission + "\n")
-
-        self.permission_output.moveCursor(QTextCursor.MoveOperation.Start)
+        self.first_package_output.moveCursor(QTextCursor.MoveOperation.Start)
 
     def input_first_drop(self, event):
         if event.mimeData().hasUrls():
@@ -128,7 +122,7 @@ class PermissionTab(QWidget):
         self.second_package_output.setVisible(True)
         self.pack_up_btn.setVisible(True)
         self.show_permission_gb.setVisible(False)
-        self.is_show_widget = True
+        self.show_permission_widget = True
 
         permissions1 = self.get_apk_permissions(self.input_first_package_le.text())
         permissions2 = self.get_apk_permissions(self.input_second_package_le.text())
@@ -149,13 +143,13 @@ class PermissionTab(QWidget):
     # 点击"收起"
     def click_pack_up(self):
         self.pack_up_btn.setVisible(False)
-        if self.is_show_widget:
+        if self.show_permission_widget:
             self.first_package_output.setVisible(False)
             self.second_package_output.setVisible(False)
             self.show_permission_gb.setVisible(True)
         else:
             self.compare_permission_gb.setVisible(True)
-            self.permission_output.setVisible(False)
+            self.first_package_output.setVisible(False)
 
     def highlight_diff_permissions(self, diff_permissions):
         cursor = self.first_package_output.textCursor()

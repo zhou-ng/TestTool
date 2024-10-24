@@ -7,7 +7,7 @@ import time
 from PyQt6.QtCore import QTimer, QSortFilterProxyModel, Qt
 from PyQt6.QtGui import QStandardItemModel, QStandardItem
 from PyQt6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLineEdit, QHBoxLayout, QSpacerItem, QSizePolicy, \
-    QFrame, QStatusBar, QGroupBox, QFileDialog, QLabel, QTableView, QHeaderView, QAbstractItemView, QComboBox
+    QFrame, QStatusBar, QGroupBox, QFileDialog, QLabel, QTableView, QHeaderView, QComboBox
 
 
 class OtherFunctionsTab(QWidget):
@@ -22,8 +22,8 @@ class OtherFunctionsTab(QWidget):
         v_spacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)  # 垂直弹簧
         v_spacer_10 = QSpacerItem(0, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)  # 垂直间距10像素的弹簧
 
-        select_path_btn = QPushButton("选择路径")
-        select_path_btn.setToolTip("选择截图/录屏/日志保存路径")
+        select_path_btn = QPushButton("保存路径")
+        select_path_btn.setToolTip("选择截图/录屏/日志文件保存路径")
         self.output_path_le = QLineEdit()
         self.output_path_le.setReadOnly(True)
         other_functions_tab_vl = QVBoxLayout()
@@ -65,7 +65,7 @@ class OtherFunctionsTab(QWidget):
         first_hl.addWidget(self.log_end_btn)
         first_hl.addItem(h_spacer)
 
-        self.select_log_file_btn = QPushButton("选择文件")
+        self.select_log_file_btn = QPushButton("选择日志文件")
         self.select_log_file_btn.setToolTip("选择日志文件(.txt格式)")
         self.input_log_file_le = QLineEdit()
         self.input_log_file_le.setReadOnly(True)
@@ -88,7 +88,6 @@ class OtherFunctionsTab(QWidget):
         # 添加过滤输入框
         self.log_filter_cb = QComboBox()
         self.log_filter_cb.addItems(["All", "Fatal", "ANR", "Error", "Exception"])
-        self.log_filter_cb.currentTextChanged.connect(self.set_log_filter)
         self.log_filter_cb.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.log_filter_cb.setVisible(False)
         log_filter_hl = QHBoxLayout()
@@ -125,13 +124,14 @@ class OtherFunctionsTab(QWidget):
         self.recording_timer.timeout.connect(self.update_timer)
         self.recording_duration = 0
 
-        # 按钮点击事件
+        # 按钮事件
         select_path_btn.clicked.connect(self.select_file_path)
         screenshot_btn.clicked.connect(self.take_screenshot)
         self.start_recording_btn.clicked.connect(self.start_recording)
         self.end_recording_btn.clicked.connect(self.end_recording)
         self.log_start_btn.clicked.connect(self.start_logging)
         self.log_end_btn.clicked.connect(self.end_logging)
+        self.log_filter_cb.currentTextChanged.connect(self.set_log_filter)
         self.select_log_file_btn.clicked.connect(self.select_log_file)
         self.analyse_log_btn.clicked.connect(self.analyse_log)
 
@@ -249,8 +249,7 @@ class OtherFunctionsTab(QWidget):
         try:
             with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as log_file:
                 log_lines = log_file.readlines()
-                exceptions = []  # 用于存储异常信息的列表
-
+                exceptions = []  # 用于存储异常信息
                 # 正则表达式匹配异常行
                 exception_pattern = re.compile(r'(?i)(exception|error|fatal|anr in)', re.MULTILINE)
 

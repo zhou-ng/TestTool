@@ -89,7 +89,7 @@ class OperationsTab(QWidget):
         disconnect_device_btn = QPushButton("断开连接")
         get_ip_address_btn = QPushButton("?")
         get_ip_address_btn.setFixedSize(20, 20)
-        get_ip_address_btn.setToolTip("获取当前连接设备的IP地址")
+        get_ip_address_btn.setToolTip("不知道IP地址?,点此获取与当前电脑连接设备的IP地址")
         device_ip_layout = QHBoxLayout()
         device_ip_layout.addWidget(self.input_ip_address_le)
         device_ip_layout.addWidget(get_ip_address_btn)
@@ -159,7 +159,7 @@ class OperationsTab(QWidget):
         operations_tab.addWidget(console_groupbox)
         self.setLayout(operations_tab)
 
-        # 按钮点击事件
+        # 按钮事件
         self.window_top_btn.clicked.connect(self.click_window_top)
         refresh_btn.clicked.connect(self.refresh_device_list)
         connect_device_btn.clicked.connect(self.connect_device_withIP)
