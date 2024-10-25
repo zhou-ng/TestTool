@@ -3,11 +3,11 @@ import sys
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTabWidget, QApplication, QMainWindow
 
-from permission_tab import PermissionTab
-from remote_tab import RemoteTab
-from operations_tab import OperationsTab
+from ui.permission_tab import PermissionTab
+from ui.remote_tab import RemoteTab
+from ui.operations_tab import OperationsTab
 from ui import TEST_TOOL_ICO_PATH
-from other_functions_tab import OtherFunctionsTab
+from ui.other_functions_tab import OtherFunctionsTab
 
 
 class MainWindow(QMainWindow):
