@@ -67,7 +67,7 @@ TestTool是基于ADB、HDC命令的图形化界面工具，兼容.apk/.apks/.hap
 项目使用的是pyinstaller打包:
 
     pyinstaller --name TestTool --onefile --windowed --icon=res/test_tool.ico ui/main_window.py
-↑↑↑此命令会生成一个spec文件,修改↑↑↑
+↑↑↑此命令会生成一个spec文件↑↑↑
     
     pyinstaller TestTool.spec
 ↑↑↑最终打包生成exe文件↑↑↑
